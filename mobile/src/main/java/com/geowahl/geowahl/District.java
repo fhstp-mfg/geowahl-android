@@ -20,13 +20,11 @@ public class District extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
 
         ListView listview = (ListView) findViewById(R.id.listView);
-        String[] values = new String[] { "alle", "Bezrik1"};
+        String[] values = new String[] {"alle", "Innere Stadt", "Leopoldstadt", "Landstraße"};
 
         ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, values);
 
         listview.setAdapter(adapter);
-
-
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 

@@ -1,6 +1,7 @@
 package com.geowahl.geowahl;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,12 +20,14 @@ public class State extends AppCompatActivity {
 
 
         ListView listview = (ListView) findViewById(R.id.listView);
-        String[] values = new String[]{"Wien", "Niederösterreich"};
+        String[] values = new String[]{"Standort", "Wien", "Niederösterreich"};
 
 
         ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, values);
 
         listview.setAdapter(adapter);
+
+        listview.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.darkblue));
 
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
