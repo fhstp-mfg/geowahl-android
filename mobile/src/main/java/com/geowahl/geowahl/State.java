@@ -27,7 +27,7 @@ public class State extends AppCompatActivity {
 
         listview.setAdapter(adapter);
 
-        listview.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.darkblue));
+//        listview.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.darkblue));
 
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
