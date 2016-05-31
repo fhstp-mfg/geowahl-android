@@ -39,14 +39,14 @@ public class MainActivity extends Activity {
         @Override
 
         public void onReceive(Context context, Intent intent) {
-            Log.v("myTag", "test onReceive");
+            //Log.v("myTag", "test onReceive");
             Bundle data = intent.getBundleExtra("datamap");
             // Display received data in UI
-            String display = "Received from the data Layer\n" +
-                    "Hole: " + data.getString("hole") + "\n" +
+            String display =
+                    "Bezirk: " + data.getString("district");/* + "\n" +
                     "Front: " + data.getString("front") + "\n" +
                     "Middle: "+ data.getString("middle") + "\n" +
-                    "Back: " + data.getString("back");
+                    "Back: " + data.getString("back");*/
             mTextView.setText(display);
         }
     }

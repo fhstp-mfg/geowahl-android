@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -13,6 +14,14 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,9 +29,17 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
-public class District extends AppCompatActivity {
+public class District extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
+
+    GoogleApiClient googleClient;
+    DataMap dataMap = new DataMap();
+    String WEARABLE_DATA_PATH = "/wearable_data";
+    String name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,15 +52,15 @@ public class District extends AppCompatActivity {
        // String[] values = new String[] {"alle", "Innere Stadt", "Leopoldstadt", "Landstraße"};
         ArrayList<HashMap<String, String>> mylist = new ArrayList<HashMap<String, String>>();
 
-        ArrayList<String> items = new ArrayList<String>();
+        final ArrayList<String> items = new ArrayList<String>();
 
         try {
             JSONArray arr = new JSONArray(loadJSONFromAsset());
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject jObj = arr.getJSONObject(i);
-                String name = jObj.getString("name");
+                name = jObj.getString("name");
                 items.add(name);
-                
+
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                         R.layout.activity_listview, items);
 
@@ -57,6 +74,8 @@ public class District extends AppCompatActivity {
                         Intent i = new Intent(District.this, Webview.class);
                         startActivity(i);
                         overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+                        dataMap.putString("district", items.get((int) id));
+                        new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
                     }
 
                 });
@@ -65,6 +84,13 @@ public class District extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        // Build a new GoogleApiClient
+        googleClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
     //Load Json from Assets
@@ -95,6 +121,76 @@ public class District extends AppCompatActivity {
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Connect to the data layer when the Activity starts
+    @Override
+    protected void onStart() {
+        super.onStart();
+        googleClient.connect();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+
+        // Create a DataMap object and send it to the data layer
+
+        //dataMap.putLong("time", new Date().getTime());
+        //dataMap.putString("district", name);
+        //dataMap.putString("front", "250");
+        //dataMap.putString("middle", "260");
+        //dataMap.putString("back", "270");
+        //Requires a new thread to avoid blocking the UI
+
+
+    }
+
+    // Disconnect from the data layer when the Activity stops
+    @Override
+    protected void onStop() {
+        if (null != googleClient && googleClient.isConnected()) {
+            googleClient.disconnect();
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+
+
+    class SendToDataLayerThread extends Thread {
+        String path;
+        DataMap dataMap;
+
+        // Constructor for sending data objects to the data layer
+        SendToDataLayerThread(String p, DataMap data) {
+            path = p;
+            dataMap = data;
+        }
+
+        public void run() {
+            // Construct a DataRequest and send over the data layer
+            PutDataMapRequest putDMR = PutDataMapRequest.create(path);
+            putDMR.getDataMap().putAll(dataMap);
+            PutDataRequest request = putDMR.asPutDataRequest();
+            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(googleClient, request).await();
+            if (result.getStatus().isSuccess()) {
+                Log.v("myTag", "DataMap: " + dataMap + " sent successfully to data layer ");
+            }
+            else {
+                // Log an error
+                Log.v("myTag", "ERROR: failed to send DataMap to data layer");
+            }
         }
     }
 }

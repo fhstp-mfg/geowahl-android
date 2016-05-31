@@ -33,11 +33,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends AppCompatActivity /*implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener{
+        GoogleApiClient.OnConnectionFailedListener*/{
 
-    GoogleApiClient googleClient;
+    //GoogleApiClient googleClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,16 +64,16 @@ public class MainActivity extends AppCompatActivity implements
 
 
         // Build a new GoogleApiClient
-        googleClient = new GoogleApiClient.Builder(this)
+       /* googleClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .build();
+                .build();*/
 
 
     }
 
-        // Connect to the data layer when the Activity starts
+    /*    // Connect to the data layer when the Activity starts
     @Override
     protected void onStart() {
         super.onStart();
@@ -141,5 +141,5 @@ public class MainActivity extends AppCompatActivity implements
                 Log.v("myTag", "ERROR: failed to send DataMap to data layer");
             }
         }
-    }
+    }*/
 }
