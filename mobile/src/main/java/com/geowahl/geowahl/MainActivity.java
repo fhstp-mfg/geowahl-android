@@ -7,7 +7,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -17,7 +21,17 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -33,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements
         ListView listview = (ListView) findViewById(R.id.listView);
         String[] values = new String[] { "Gemeinderatswahlen", "Bundespräsidentenwahlen" };
 
+
         ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, values);
         listview.setAdapter(adapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -47,15 +62,18 @@ public class MainActivity extends AppCompatActivity implements
 
         });
 
+
         // Build a new GoogleApiClient
         googleClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+
     }
 
-    // Connect to the data layer when the Activity starts
+        // Connect to the data layer when the Activity starts
     @Override
     protected void onStart() {
         super.onStart();
@@ -96,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+
+
 
     class SendToDataLayerThread extends Thread {
         String path;
