@@ -19,9 +19,11 @@ public class MainActivity extends AppCompatActivity{
         ListView listview = (ListView) findViewById(R.id.listView);
         String[] values = new String[] { "Gemeinderatswahlen", "Bundespräsidentenwahlen" };
 
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                R.layout.activity_listview, values);
 
-        ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, values);
         listview.setAdapter(adapter);
+
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override

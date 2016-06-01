@@ -15,12 +15,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.wearable.view.CardFragment;
 import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,26 +32,58 @@ public class MainActivity extends Activity {
     private WatchViewStub stub;
     String display;
 
+    private GestureDetectorCompat mDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
+
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 mTextView = (TextView) stub.findViewById(R.id.text);
+
+                Button btn = (Button)stub.findViewById(R.id.btn);
+                btn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent(MainActivity.this, DrawActivty.class);
+                        startActivity(i);
+                    }
+                });
             }
         });
+
+        stub.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = MotionEventCompat.getActionMasked(event);
+
+                switch (action) {
+                    case (MotionEvent.ACTION_DOWN):
+                        Intent i = new Intent(MainActivity.this, DrawActivty.class);
+                        startActivity(i);
+                        return true;
+                    case (MotionEvent.ACTION_UP):
+                        Log.d("UP", "Action was UP");
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            });
+
 
         // Register the local broadcast receiver
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
+
     }
 
-    public class MessageReceiver extends BroadcastReceiver {
+        public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle data = intent.getBundleExtra("datamap");
@@ -60,6 +94,5 @@ public class MainActivity extends Activity {
 
         }
     }
-
 
 }

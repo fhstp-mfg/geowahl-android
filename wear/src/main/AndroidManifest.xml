@@ -40,8 +40,8 @@
         </service>
 
         <activity
-            android:name=".DrawActivity"
-            android:label="@string/title_activity_draw">
+            android:name=".DrawActivty"
+            android:label="@string/title_activity_draw_activty">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
