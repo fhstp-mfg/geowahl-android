@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/relative"
-    tools:context="com.geowahl.geowahl.MainActivity"
+    android:id="@+id/round"
+    tools:context="com.geowahl.geowahl.DrawActivity"
     tools:deviceIds="wear_round">
 
     <TextView
@@ -13,9 +13,5 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:text="@string/hello_round" />
-    <FrameLayout
-        android:id="@+id/fragment_color"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"></FrameLayout>
+        android:text="@string/hello_round"/>
 </RelativeLayout>
