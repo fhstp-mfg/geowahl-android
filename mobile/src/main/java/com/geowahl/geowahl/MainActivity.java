@@ -1,8 +1,14 @@
 package com.geowahl.geowahl;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
@@ -13,12 +19,16 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.internal.safeparcel.SafeParcelable;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.Wearable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class MainActivity extends AppCompatActivity implements
@@ -33,20 +43,18 @@ public class MainActivity extends AppCompatActivity implements
     private static String url = "http://geowahl.suits.at/elections";
 
     // JSON Node names
-    private static final String TAG_ID = "id";
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
-    private static final String TAG_PARTNAME = "partName";
-    private static final String TAG_R = "r";
-    private static final String TAG_G = "g";
-    private static final String TAG_B = "b";
-    private static final String TAG_A = "a";
 
+
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        listView = (ListView)findViewById(R.id.listView);
 
         googleClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -65,10 +73,45 @@ public class MainActivity extends AppCompatActivity implements
             public void onResponse(JSONArray response) {
 
                 try {
+                    final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
+
                     for (int i = 0; i < response.length(); i++) {
 
                         JSONObject obj = (JSONObject) response.get(i);
                         Log.d("wahl",obj.getString(TAG_NAME).toString());
+
+                        String electionName = obj.getString(TAG_NAME);
+                        String electionSlug = obj.getString(TAG_SLUG);
+
+                        HashMap<String, String> d = new HashMap<>();
+                        d.put("name", electionName);
+                        d.put("slug", electionSlug);
+
+                        arrayList.add(d);
+
+                        ListAdapter adapter = new SimpleAdapter(
+                                MainActivity.this, arrayList,
+                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+
+                        listView.setAdapter(adapter);
+                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, final View view,
+                                                    int position, long id) {
+
+                                //ausgewählte Wahl
+                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+
+                                Intent i = new Intent(MainActivity.this, State.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putString("wahlSlug",arrayList.get((int)id).get(TAG_SLUG));
+                                i.putExtras(bundle);
+                                startActivity(i);
+                                overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+                            }
+
+                        });
+
 
                     }
 

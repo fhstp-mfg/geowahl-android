@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
@@ -51,22 +52,14 @@ public class MainActivity extends Activity {
 
         stub.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
-                int action = MotionEventCompat.getActionMasked(event);
-
-                switch (action) {
-                    case (MotionEvent.ACTION_DOWN):
-                        Intent i = new Intent(MainActivity.this, DrawActivty.class);
-                        startActivity(i);
-
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        Log.d("Down", "Action was Down");
                         return true;
-                    case (MotionEvent.ACTION_UP):
-                        Log.d("UP", "Action was UP");
-                        return false;
-                    default:
-                        return false;
                 }
+                return false;
             }
-            });
+        });
 
 
         // Register the local broadcast receiver
