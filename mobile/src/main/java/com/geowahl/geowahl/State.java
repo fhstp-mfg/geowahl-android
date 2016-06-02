@@ -69,7 +69,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         location.setOnClickListener(
                 new Button.OnClickListener() {
                     public void onClick(View v) {
-                        Log.d("url", "uuurrrrllll"+locationurl);
                         gps = new GPSTracker(State.this);
 
                         if(gps.canGetLocation()){
@@ -79,7 +78,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                             Log.d("lat", String.valueOf(latitude));
                             Log.d("lon", String.valueOf(longitude));
                             locationurl = url_part1+electionslug+"/"+latitude+","+longitude;
-                            Log.d("url", "uuurrrrllll"+locationurl);
                             getResult(locationurl);
 
                         } else {
@@ -194,82 +192,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     public void getResult(final String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-
-        /*JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
-
-            @Override
-            public void onResponse(JSONArray response) {
-
-                try {
-
-                    final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
-
-                    Log.d("url", locationurl);
-                    Log.d("response", String.valueOf(response));
-
-                    for (int i = 0; i < response.length(); i++) {
-
-                        JSONObject obj = (JSONObject) response.get(i);
-                        Log.d("object", String.valueOf(obj));
-                        //Log.d("state",obj.getString(TAG_NAME).toString());
-
-                        /*String stateName = obj.getString(TAG_NAME);
-                        String stateSlug = obj.getString(TAG_SLUG);
-
-                        Log.d("stateName",stateName);
-                        Log.d("stateSlug",stateSlug);
-                        HashMap<String, String> d = new HashMap<>();
-                        d.put("name", stateName);
-                        d.put("slug", stateSlug);
-
-                        arrayList.add(d);
-
-                        Log.d("wahlslug",">"+ wahlslug);
-
-                        ListAdapter adapter = new SimpleAdapter(
-                                State.this, arrayList,
-                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
-
-                        listView.setAdapter(adapter);
-                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> parent, final View view,
-                                                    int position, long id) {
-
-                                //ausgewählte Wahl
-                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
-
-
-                                Intent i = new Intent(State.this, District.class);
-                                Bundle bundle = new Bundle();
-                                bundle.putString("wahlSlug",wahlslug);
-                                bundle.putString("electionSlug",electionslug);
-                                bundle.putString("stateSlug",arrayList.get((int)id).get(TAG_SLUG));
-                                i.putExtras(bundle);
-                                startActivity(i);
-                                overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
-                            }
-
-                        });*
-
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getApplicationContext(),
-                            "Error: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("test",error.getMessage());
-                //Toast.makeText(State.this, error.getMessage(),Toast.LENGTH_LONG).show();
-                //VolleyLog.d("error", "Error: " + error.getMessage());
-
-            }
-        });*/
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
                 url_to_api, null, new Response.Listener<JSONObject>() {
 
@@ -289,7 +211,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                             "Error: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 }
-                //hidepDialog();
             }
         }, new Response.ErrorListener() {
 
@@ -299,8 +220,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                 VolleyLog.d("error", "Error: " + error.getMessage());
                 Toast.makeText(getApplicationContext(),
                         error.getMessage(), Toast.LENGTH_SHORT).show();
-                // hide the progress dialog
-                //hidepDialog();
             }
         });
 
