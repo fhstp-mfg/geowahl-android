@@ -14,6 +14,12 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataApi;
@@ -41,6 +47,10 @@ public class District extends AppCompatActivity implements
     String WEARABLE_DATA_PATH = "/wearable_data";
     String name;
 
+    private static final String TAG_NAME = "name";
+    private static String url_part1 = "http://geowahl.suits.at/";
+    private static String url_part2 = "/districts";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,42 +58,7 @@ public class District extends AppCompatActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
 
-        ListView listview = (ListView) findViewById(R.id.listView);
-       // String[] values = new String[] {"alle", "Innere Stadt", "Leopoldstadt", "Landstraße"};
-        ArrayList<HashMap<String, String>> mylist = new ArrayList<HashMap<String, String>>();
-
-        final ArrayList<String> items = new ArrayList<String>();
-
-        try {
-            JSONArray arr = new JSONArray(loadJSONFromAsset());
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject jObj = arr.getJSONObject(i);
-                name = jObj.getString("name");
-                items.add(name);
-
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                        R.layout.activity_listview, items);
-
-                listview.setAdapter(adapter);
-
-                listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, final View view,
-                                            int position, long id) {
-                        Intent i = new Intent(District.this, Webview.class);
-                        startActivity(i);
-                        overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
-                        dataMap.putString("district", items.get((int) id));
-                        new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
-                    }
-
-                });
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        String url = url_part1+"bpw16a"+"/"+"w"+url_part2;
 
         // Build a new GoogleApiClient
         googleClient = new GoogleApiClient.Builder(this)
@@ -91,6 +66,43 @@ public class District extends AppCompatActivity implements
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+        getDistricts(url);
+    }
+
+    public void getDistricts(String url_to_api) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+
+                try {
+                    for (int i = 0; i < response.length(); i++) {
+
+                        JSONObject obj = (JSONObject) response.get(i);
+                        Log.d("district",obj.getString(TAG_NAME).toString());
+
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(District.this, error.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                VolleyLog.d("error", "Error: " + error.getMessage());
+
+            }
+        });
+
+        queue.add(req);
     }
 
     //Load Json from Assets

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GeoWahl</string>
+    <string name="location">Standort</string>
 </resources>

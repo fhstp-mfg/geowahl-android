@@ -1,5 +1,6 @@
 package com.geowahl.geowahl;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -47,6 +48,10 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent i = new Intent(MainActivity.this, State.class);
+        //i.putExtra(KEY, edit.getText().toString());
+        startActivity(i);
 
         googleClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)

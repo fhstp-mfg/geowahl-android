@@ -1,69 +1,77 @@
 package com.geowahl.geowahl;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.Button;
+import android.widget.Toast;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.Wearable;
 
-public class State extends AppCompatActivity {
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class State extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+
+    private static final String TAG_NAME = "name";
+    private static String url_part1 = "http://geowahl.suits.at/";
+    private static String url_part2 = "/states";
+
+    GoogleApiClient googleClient;
+    DataMap dataMap = new DataMap();
+    String WEARABLE_DATA_PATH = "/wearable_data";
+    Button location;
+    GPSTracker gps;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_state);
 
-        ListView listview = (ListView) findViewById(R.id.listView);
-        //String[] values = new String[]{"Standort", "Wien", "Niederösterreich"};
+        location = (Button) findViewById(R.id.location);
 
+        location.setOnClickListener(
+                new Button.OnClickListener() {
+                    public void onClick(View v) {
+                        gps = new GPSTracker(State.this);
 
-        String test = getIntent().getStringExtra("electionId");
-        String name = getIntent().getStringExtra("partyName");
-        Integer r = Integer.parseInt(getIntent().getStringExtra("r"));
-        Integer g = Integer.parseInt(getIntent().getStringExtra("g"));
-        Integer b = Integer.parseInt(getIntent().getStringExtra("b"));
-        String a = getIntent().getStringExtra("a");
+                        if(gps.canGetLocation()){
+                            double latitude = gps.getLatitude();
+                            double longitude = gps.getLongitude();
 
-        System.out.println("...test data.." + test);
-        System.out.println("...test data.." + name);
-        System.out.println("...test data.." + r);
+                            Log.d("lat", String.valueOf(latitude));
+                            Log.d("lon", String.valueOf(longitude));
+                        }else {
+                            gps.showSettingAlerts();
+                        }
+                    }
+                }
+        );
 
-        View view = (View)findViewById(R.id.colorView);
-        view.setBackgroundColor(Color.rgb(r,g,b));
+        String url = url_part1+"bpw16a"+url_part2;
 
-/*
-        ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, values);
+        googleClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
 
-        listview.setAdapter(adapter);
-
-//        listview.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.darkblue));
-
-
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, final View view,
-                                    int position, long id) {
-                Intent i = new Intent(State.this, District.class);
-                startActivity(i);
-                overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
-            }
-
-        });
-        */
+        getStates(url);
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -77,6 +85,56 @@ public class State extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void getStates(String url_to_api) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+
+                try {
+                    for (int i = 0; i < response.length(); i++) {
+
+                        JSONObject obj = (JSONObject) response.get(i);
+                        Log.d("state",obj.getString(TAG_NAME).toString());
+
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(State.this, error.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                VolleyLog.d("error", "Error: " + error.getMessage());
+
+            }
+        });
+
+        queue.add(req);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 }
 
