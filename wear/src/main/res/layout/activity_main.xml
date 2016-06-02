@@ -11,3 +11,4 @@
     tools:context="com.geowahl.geowahl.MainActivity"
     tools:deviceIds="wear">
 </android.support.wearable.view.WatchViewStub>
+
