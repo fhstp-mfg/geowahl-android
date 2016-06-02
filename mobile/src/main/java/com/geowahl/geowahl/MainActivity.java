@@ -46,6 +46,9 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
 
+    String electionName;
+    String electionSlug;
+
 
     ListView listView;
 
@@ -68,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements
     public void getElections(String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
+
+
         JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
@@ -80,8 +85,8 @@ public class MainActivity extends AppCompatActivity implements
                         JSONObject obj = (JSONObject) response.get(i);
                         Log.d("wahl",obj.getString(TAG_NAME).toString());
 
-                        String electionName = obj.getString(TAG_NAME);
-                        String electionSlug = obj.getString(TAG_SLUG);
+                        electionName = obj.getString(TAG_NAME);
+                        electionSlug = obj.getString(TAG_SLUG);
 
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", electionName);
@@ -105,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements
                                 Intent i = new Intent(MainActivity.this, State.class);
                                 Bundle bundle = new Bundle();
                                 bundle.putString("wahlSlug",arrayList.get((int)id).get(TAG_SLUG));
+                                bundle.putString("electionSlug",arrayList.get((int)id).get(electionSlug));
                                 i.putExtras(bundle);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);

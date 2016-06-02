@@ -45,7 +45,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     String WEARABLE_DATA_PATH = "/wearable_data";
     Button location;
     GPSTracker gps;
-    String wahlslug;
+    String wahlslug,electionslug;
 
     ListView listView;
 
@@ -58,8 +58,10 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         Bundle b = new Bundle();
         b = getIntent().getExtras();
         wahlslug = b.getString("wahlSlug");
+        electionslug = b.getString("electionSlug");
 
         location = (Button) findViewById(R.id.location);
+        listView = (ListView) findViewById(R.id.listView);
 
         location.setOnClickListener(
                 new Button.OnClickListener() {
@@ -131,6 +133,8 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
                         arrayList.add(d);
 
+                        Log.d("wahlslug",">"+ wahlslug);
+
                         ListAdapter adapter = new SimpleAdapter(
                                 State.this, arrayList,
                                 R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
@@ -144,9 +148,11 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                 //ausgewählte Wahl
                                 Log.d("array", arrayList.get((int)id).get(TAG_NAME));
 
-                                Intent i = new Intent(State.this, State.class);
+
+                                Intent i = new Intent(State.this, District.class);
                                 Bundle bundle = new Bundle();
-                                bundle.putString("wahlSlug",arrayList.get((int)id).get(wahlslug));
+                                bundle.putString("wahlSlug",wahlslug);
+                                bundle.putString("electionSlug",electionslug);
                                 bundle.putString("stateSlug",arrayList.get((int)id).get(TAG_SLUG));
                                 i.putExtras(bundle);
                                 startActivity(i);
