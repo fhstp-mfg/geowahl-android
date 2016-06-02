@@ -57,10 +57,11 @@ public class MainActivity extends Activity {
                     case (MotionEvent.ACTION_DOWN):
                         Intent i = new Intent(MainActivity.this, DrawActivty.class);
                         startActivity(i);
+
                         return true;
                     case (MotionEvent.ACTION_UP):
                         Log.d("UP", "Action was UP");
-                        return true;
+                        return false;
                     default:
                         return false;
                 }

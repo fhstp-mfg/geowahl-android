@@ -45,8 +45,8 @@ public class MainActivity extends AppCompatActivity implements
     String name;
 
     // URL to get contacts JSON
-    //private static String url = "http://geowahl.suits.at/elections";
-    private static String url = "http://flock-0867.students.fhstp.ac.at/geowahl/elections.json";
+    private static String url = "http://geowahl.suits.at/elections";
+    //private static String url = "http://flock-0867.students.fhstp.ac.at/geowahl/elections.json";
 
     // JSON Node names
     private static final String TAG_ID = "id";
