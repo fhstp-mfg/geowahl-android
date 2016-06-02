@@ -14,11 +14,13 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -45,7 +47,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     String WEARABLE_DATA_PATH = "/wearable_data";
     Button location;
     GPSTracker gps;
-    String wahlslug,electionslug;
+    String wahlslug,electionslug,locationurl;
 
     ListView listView;
 
@@ -67,6 +69,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         location.setOnClickListener(
                 new Button.OnClickListener() {
                     public void onClick(View v) {
+                        Log.d("url", "uuurrrrllll"+locationurl);
                         gps = new GPSTracker(State.this);
 
                         if(gps.canGetLocation()){
@@ -75,7 +78,11 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
                             Log.d("lat", String.valueOf(latitude));
                             Log.d("lon", String.valueOf(longitude));
-                        }else {
+                            locationurl = url_part1+electionslug+"/"+latitude+","+longitude;
+                            Log.d("url", "uuurrrrllll"+locationurl);
+                            getResult(locationurl);
+
+                        } else {
                             gps.showSettingAlerts();
                         }
                     }
@@ -178,6 +185,122 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                         Toast.LENGTH_LONG).show();
                 VolleyLog.d("error", "Error: " + error.getMessage());
 
+            }
+        });
+
+        queue.add(req);
+    }
+
+    public void getResult(final String url_to_api) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+
+        /*JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+
+            @Override
+            public void onResponse(JSONArray response) {
+
+                try {
+
+                    final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
+
+                    Log.d("url", locationurl);
+                    Log.d("response", String.valueOf(response));
+
+                    for (int i = 0; i < response.length(); i++) {
+
+                        JSONObject obj = (JSONObject) response.get(i);
+                        Log.d("object", String.valueOf(obj));
+                        //Log.d("state",obj.getString(TAG_NAME).toString());
+
+                        /*String stateName = obj.getString(TAG_NAME);
+                        String stateSlug = obj.getString(TAG_SLUG);
+
+                        Log.d("stateName",stateName);
+                        Log.d("stateSlug",stateSlug);
+                        HashMap<String, String> d = new HashMap<>();
+                        d.put("name", stateName);
+                        d.put("slug", stateSlug);
+
+                        arrayList.add(d);
+
+                        Log.d("wahlslug",">"+ wahlslug);
+
+                        ListAdapter adapter = new SimpleAdapter(
+                                State.this, arrayList,
+                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+
+                        listView.setAdapter(adapter);
+                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, final View view,
+                                                    int position, long id) {
+
+                                //ausgewählte Wahl
+                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+
+
+                                Intent i = new Intent(State.this, District.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putString("wahlSlug",wahlslug);
+                                bundle.putString("electionSlug",electionslug);
+                                bundle.putString("stateSlug",arrayList.get((int)id).get(TAG_SLUG));
+                                i.putExtras(bundle);
+                                startActivity(i);
+                                overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+                            }
+
+                        });*
+
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("test",error.getMessage());
+                //Toast.makeText(State.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                //VolleyLog.d("error", "Error: " + error.getMessage());
+
+            }
+        });*/
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("response", response.toString());
+
+
+                try {
+                    String name = response.getString("name");
+
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+                //hidepDialog();
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("test",error.getMessage());
+                VolleyLog.d("error", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+                // hide the progress dialog
+                //hidepDialog();
             }
         });
 
