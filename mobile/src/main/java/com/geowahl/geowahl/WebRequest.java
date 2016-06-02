@@ -63,6 +63,7 @@ public class WebRequest {
             conn.setConnectTimeout(15000);
             conn.setDoInput(true);
             conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type","application/json");
 
             if (requestmethod == POST) {
                 conn.setRequestMethod("POST");
