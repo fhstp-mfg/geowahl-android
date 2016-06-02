@@ -58,6 +58,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         Bundle b = new Bundle();
         b = getIntent().getExtras();
         wahlslug = b.getString("wahlSlug");
+        Log.d("slug", wahlslug);
         electionslug = b.getString("electionSlug");
 
         location = (Button) findViewById(R.id.location);

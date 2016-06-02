@@ -108,8 +108,6 @@ Log.d("url",url);
                         d.put("name", districtName);
                         arrayList.add(d);
 
-
-
                         ListAdapter adapter = new SimpleAdapter(
                                 District.this, arrayList,
                                 R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
@@ -123,7 +121,11 @@ Log.d("url",url);
 
                                 //ausgewählte Wahl
                                 Log.d("array", arrayList.get((int)id).get(TAG_NAME));
-                                dataMap.putString("district", districtName);
+
+                                //dataMap.putString("district", districtName);
+                                dataMap.putString("district", arrayList.get((int)id).get(TAG_NAME));
+                                new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+
                                 Intent i = new Intent(District.this, Webview.class);
                                 Bundle bundle = new Bundle();
                                 bundle.putString("stateSlug",stateslug);
@@ -132,7 +134,10 @@ Log.d("url",url);
                                 i.putExtras(bundle);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+
+
                             }
+
 
                         });
 
