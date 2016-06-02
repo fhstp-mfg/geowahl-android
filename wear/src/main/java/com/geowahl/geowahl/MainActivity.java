@@ -74,13 +74,15 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle data = intent.getBundleExtra("datamap");
+            /*
             Integer rot = Integer.parseInt(data.getString("r"));
             Integer grün = Integer.parseInt(data.getString("g"));
             Integer blau = Integer.parseInt(data.getString("b"));
-            String name = data.getString("partyName");
+            */
+            String name = data.getString("district");
 
             mTextView.setText(name);
-            stub.setBackgroundColor(Color.rgb(rot,grün,blau));
+          //  stub.setBackgroundColor(Color.rgb(rot,grün,blau));
 
         }
     }

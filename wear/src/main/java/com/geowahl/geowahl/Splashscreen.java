@@ -1,12 +1,12 @@
 package com.geowahl.geowahl;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Menu;
+import android.os.Handler;
 
-public class Splashscreen extends AppCompatActivity {
+
+public class Splashscreen extends Activity {
 
     private static int SPLASH_TIME_OUT = 4000;
 
@@ -14,6 +14,7 @@ public class Splashscreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_splashscreen);
+
 
         /* New Handler to start the Menu-Activity
          * and close this Splash-Screen after some seconds.*/

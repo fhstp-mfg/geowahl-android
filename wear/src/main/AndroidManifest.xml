@@ -23,14 +23,21 @@
             android:name="com.google.android.wearable"
             android:required="false" />
 
+        <!-- Splash screen -->
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:name=".Splashscreen"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name">
         </activity>
 
         <service android:name=".ListenerService">
@@ -42,11 +49,6 @@
         <activity
             android:name=".DrawActivty"
             android:label="@string/title_activity_draw_activty">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

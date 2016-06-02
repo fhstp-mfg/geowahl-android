@@ -60,6 +60,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         wahlslug = b.getString("wahlSlug");
 
         location = (Button) findViewById(R.id.location);
+        listView = (ListView)findViewById(R.id.listView);
 
         location.setOnClickListener(
                 new Button.OnClickListener() {
