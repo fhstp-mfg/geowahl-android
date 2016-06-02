@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.gesture.Gesture;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -31,9 +32,8 @@ public class MainActivity extends Activity {
 
     private TextView mTextView;
     private WatchViewStub stub;
-    String display;
 
-    private GestureDetectorCompat mDetector;
+    GestureDetector myG;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,15 +50,16 @@ public class MainActivity extends Activity {
             }
         });
 
-        stub.setOnTouchListener(new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        Log.d("Down", "Action was Down");
-                        return true;
+            stub.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
+                    int action = event.getAction();
+                    switch(action){
+                        case MotionEvent.ACTION_DOWN:
+                            startActivity(new Intent(MainActivity.this,DrawActivty.class));
+                            break;
+                    }
+                    return true;
                 }
-                return false;
-            }
         });
 
 
@@ -84,4 +85,5 @@ public class MainActivity extends Activity {
         }
     }
 
-}
+
+    }

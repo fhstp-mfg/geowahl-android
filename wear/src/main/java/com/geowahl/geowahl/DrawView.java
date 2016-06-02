@@ -74,21 +74,20 @@ public class DrawView extends View {
                 center_y + radius);
 
         //drawArc(RectF oval, float startAngle, float sweepAngle, boolean useCenter, Paint paint)
-        int spoe = 30;
-        int oevp = 20;
-        int fpoe = 40;
-        int lugner = 10;
+        float spoe = (float) 30.22;
+        float oevp = (float) 20.78;
+        float fpoe = (float) 39.50;
+        float lugner = (float)9.50;
 
-        int spoeW = spoe * 360 /100;
-        int oevpW = oevp * 360/100;
-        int fpoeW = fpoe * 360/100;
-        int lugnerW = lugner * 360/100;
+        float spoeW = spoe * 360 /100;
+        float oevpW = oevp * 360/100;
+        float fpoeW = fpoe * 360/100;
+        float lugnerW = lugner * 360/100;
 
         Log.d("spö" , String.valueOf(spoeW));
-        Log.d("spö" , String.valueOf(oevpW));
-        Log.d("spö" , String.valueOf(fpoeW));
-        Log.d("spö" , String.valueOf(spoeW));
-
+        Log.d("övp" , String.valueOf(oevpW));
+        Log.d("fpö" , String.valueOf(fpoeW));
+        Log.d("lugner" , String.valueOf(lugnerW));
 
         canvas.drawArc(oval, 0, spoeW, true, paint);
         canvas.drawArc(oval, spoeW, oevpW, true, gray);
