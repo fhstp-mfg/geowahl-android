@@ -46,14 +46,6 @@ public class MainActivity extends Activity {
             public void onLayoutInflated(WatchViewStub stub) {
                 mTextView = (TextView) stub.findViewById(R.id.text);
 
-                Button btn = (Button)stub.findViewById(R.id.btn);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent i = new Intent(MainActivity.this, DrawActivty.class);
-                        startActivity(i);
-                    }
-                });
             }
         });
 
@@ -87,10 +79,13 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle data = intent.getBundleExtra("datamap");
-            display = data.getString("district");
+            Integer rot = Integer.parseInt(data.getString("r"));
+            Integer grün = Integer.parseInt(data.getString("g"));
+            Integer blau = Integer.parseInt(data.getString("b"));
+            String name = data.getString("partyName");
 
-            mTextView.setText(display);
-            stub.setBackgroundColor(Color.BLUE);
+            mTextView.setText(name);
+            stub.setBackgroundColor(Color.rgb(rot,grün,blau));
 
         }
     }

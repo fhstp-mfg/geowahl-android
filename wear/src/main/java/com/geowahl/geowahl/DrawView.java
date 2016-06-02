@@ -11,20 +11,24 @@ import android.view.View;
  */
 public class DrawView extends View {
 
-    private Paint paint;
+    Paint gray;
+    Paint green;
 
     public DrawView(Context context) {
         super(context);
 
         // create the Paint and set its color
-        paint = new Paint();
-        paint.setColor(Color.GRAY);
+        gray = new Paint();
+        gray.setColor(Color.GRAY);
+        green =  new Paint();
+        green.setColor(Color.GREEN);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawColor(Color.BLUE);
-        canvas.drawCircle(200, 200, 100, paint);
+        canvas.drawCircle(200, 200, 100, gray);
+        canvas.drawCircle(70,70,50,green);
     }
 
 }
