@@ -48,17 +48,33 @@ public class District extends AppCompatActivity implements
     String name;
 
     private static final String TAG_NAME = "name";
+    private static final String TAG_SLUG = "slug";
     private static String url_part1 = "http://geowahl.suits.at/";
     private static String url_part2 = "/districts";
+    String wahlslug, stateslug, electionslug;
+
+    String districtName;
+
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_district);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //getSupportActionBar().setDisplayShowTitleEnabled(true);
 
-        String url = url_part1+"bpw16a"+"/"+"w"+url_part2;
+        listView = (ListView) findViewById(R.id.listView);
+
+        Bundle b = new Bundle();
+        b = getIntent().getExtras();
+        wahlslug = b.getString("wahlSlug");
+        stateslug = b.getString("stateSlug");
+        electionslug = b.getString("electionSlug");
+
+        String url = url_part1+wahlslug+"/"+stateslug+url_part2;
+Log.d("url",url);
+        Log.d("wahlslug",">"+ wahlslug);
 
         // Build a new GoogleApiClient
         googleClient = new GoogleApiClient.Builder(this)
@@ -78,10 +94,47 @@ public class District extends AppCompatActivity implements
             public void onResponse(JSONArray response) {
 
                 try {
-                    for (int i = 0; i < response.length(); i++) {
+                    final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
 
-                        JSONObject obj = (JSONObject) response.get(i);
+                    for (int j = 0; j < response.length(); j++) {
+
+                        JSONObject obj = (JSONObject) response.get(j);
                         Log.d("district",obj.getString(TAG_NAME).toString());
+
+                        districtName = obj.getString(TAG_NAME);
+
+
+                        HashMap<String, String> d = new HashMap<>();
+                        d.put("name", districtName);
+                        arrayList.add(d);
+
+
+
+                        ListAdapter adapter = new SimpleAdapter(
+                                District.this, arrayList,
+                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+
+                        listView.setAdapter(adapter);
+                        final int finalJ = j;
+                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, final View view,
+                                                    int position, long id) {
+
+                                //ausgewählte Wahl
+                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+                                dataMap.putString("district", districtName);
+                                Intent i = new Intent(District.this, Webview.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putString("stateSlug",stateslug);
+                                bundle.putString("electionSlug",electionslug);
+                                bundle.putInt("districtId", finalJ);
+                                i.putExtras(bundle);
+                                startActivity(i);
+                                overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+                            }
+
+                        });
 
                     }
 
@@ -151,6 +204,8 @@ public class District extends AppCompatActivity implements
 
         //dataMap.putLong("time", new Date().getTime());
         //dataMap.putString("district", name);
+        //dataMap.putString("electionslug", electionslug);
+        //dataMap.putString("stateslug", stateslug);
         //dataMap.putString("front", "250");
         //dataMap.putString("middle", "260");
         //dataMap.putString("back", "270");
