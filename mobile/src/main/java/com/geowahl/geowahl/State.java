@@ -69,6 +69,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         wahlslug = b.getString("wahlSlug");
         Log.d("slug", wahlslug);
         electionslug = b.getString("electionSlug");
+        //final String[] donuturl = new String[1];
 
         location = (Button) findViewById(R.id.location);
         listView = (ListView) findViewById(R.id.listView);
@@ -85,6 +86,8 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                             Log.d("lat", String.valueOf(latitude));
                             Log.d("lon", String.valueOf(longitude));
                             locationurl = url_part1+electionslug+"/"+latitude+","+longitude;
+
+                            Log.d("locationurl", locationurl);
                             getResult(locationurl);
 
                         } else {
@@ -110,8 +113,12 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         switch (item.getItemId()) {
             case android.R.id.home:
                 // app icon in action bar clicked; goto parent activity.
-                //this.finish();
-                NavUtils.navigateUpFromSameTask(this);
+                this.finish();
+                //NavUtils.navigateUpFromSameTask(this);
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                NavUtils.navigateUpTo(this, intent);
+
                 overridePendingTransition(R.animator.activity_back_in, R.animator.activity_back_out);
                 return true;
             default:
@@ -195,6 +202,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
     public void getResult(final String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
+        final String[] url = new String[1];
 
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
                 url_to_api, null, new Response.Listener<JSONObject>() {
@@ -206,10 +214,19 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                 try {
                     JSONObject district = response.getJSONObject("district");
                     String districtname = district.getString("name");
+                    String districtid = district.getString("id");
+                    JSONObject state = response.getJSONObject("state");
+                    String stateslug = state.getString("slug");
+                    Log.d("slug",stateslug);
 
                     JSONArray results1 = district.getJSONArray("results");
 
                     dataMap.putString("districtname", districtname);
+                    dataMap.putString("districtid", districtid);
+
+                    url[0] = url_part1+electionslug+"/"+stateslug+"/"+districtid+"/donut-chart";
+
+
 
                     for(int i=0;i < results1.length();i++){
                         JSONObject obj = results1.getJSONObject(i);
@@ -218,9 +235,9 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                         dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
                     }
 
-                    JSONObject state = response.getJSONObject("state");
-                    String statename = district.getString("name");
-                    JSONArray results2 = district.getJSONArray("results");
+                    //JSONObject state = response.getJSONObject("state");
+                    String statename = state.getString("name");
+                    JSONArray results2 = state.getJSONArray("results");
 
                     dataMap.putString("statename", statename);
 
@@ -233,6 +250,14 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                         dataMap.putString("exact_"+i, obj.getString(TAG_EXACT));
                     }
                     new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+
+                    Intent i = new Intent(State.this, Webview.class);
+                    Bundle bundle = new Bundle();
+                    Log.d("locationurl", url[0]);
+                    bundle.putString("donuturl", url[0]);
+                    i.putExtras(bundle);
+                    startActivity(i);
+                    overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
 
                 } catch (JSONException e) {
                     e.printStackTrace();

@@ -144,8 +144,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-
-
     @Override
     public void onErrorResponse(VolleyError error) {
         //mTextView.setText(error.getMessage());
