@@ -24,13 +24,17 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -39,6 +43,9 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
+    private static final String TAG_VOTES = "votes";
+    private static final String TAG_PERCENT = "percent";
+    private static final String TAG_EXACT = "exact";
     private static String url_part1 = "http://geowahl.suits.at/";
     private static String url_part2 = "/states";
 
@@ -115,24 +122,24 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     public void getStates(String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(JSONArray response) {
+            public void onResponse(JSONObject  response) {
 
                 try {
 
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
 
-                    for (int i = 0; i < response.length(); i++) {
+                    JSONArray array = response.getJSONArray("states");
+                    Log.d("states",array.toString());
+                    for (int i = 0; i < array.length(); i++) {
 
-                        JSONObject obj = (JSONObject) response.get(i);
-                        //Log.d("state",obj.getString(TAG_NAME).toString());
+                        JSONObject object = array.getJSONObject(i);
 
-                        String stateName = obj.getString(TAG_NAME);
-                        String stateSlug = obj.getString(TAG_SLUG);
+                        String stateName = object.getString(TAG_NAME);
+                        String stateSlug = object.getString(TAG_SLUG);
 
-                        Log.d("stateName",stateName);
-                        Log.d("stateSlug",stateSlug);
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", stateName);
                         d.put("slug", stateSlug);
@@ -154,7 +161,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                 //ausgewählte Wahl
                                 Log.d("array", arrayList.get((int)id).get(TAG_NAME));
 
-
                                 Intent i = new Intent(State.this, District.class);
                                 Bundle bundle = new Bundle();
                                 bundle.putString("wahlSlug",wahlslug);
@@ -164,9 +170,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
                             }
-
                         });
-
                     }
 
                 } catch (JSONException e) {
@@ -197,13 +201,38 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
             @Override
             public void onResponse(JSONObject response) {
-                Log.d("response", response.toString());
-
+                Log.d("respns",response.toString());
 
                 try {
-                    String name = response.getString("name");
+                    JSONObject district = response.getJSONObject("district");
+                    String districtname = district.getString("name");
 
+                    JSONArray results1 = district.getJSONArray("results");
 
+                    dataMap.putString("districtname", districtname);
+
+                    for(int i=0;i < results1.length();i++){
+                        JSONObject obj = results1.getJSONObject(i);
+
+                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
+                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
+                    }
+
+                    JSONObject state = response.getJSONObject("state");
+                    String statename = district.getString("name");
+                    JSONArray results2 = district.getJSONArray("results");
+
+                    dataMap.putString("statename", statename);
+
+                    for(int i=0;i < results2.length();i++){
+                        JSONObject obj = results2.getJSONObject(i);
+
+                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
+                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
+                        dataMap.putString("percent_"+i, obj.getString(TAG_PERCENT));
+                        dataMap.putString("exact_"+i, obj.getString(TAG_EXACT));
+                    }
+                    new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -211,6 +240,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                             "Error: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 }
+                Log.d("response", response.toString());
             }
         }, new Response.ErrorListener() {
 
@@ -239,6 +269,32 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
+    }
+
+    class SendToDataLayerThread extends Thread {
+        String path;
+        DataMap dataMap;
+
+        // Constructor for sending data objects to the data layer
+        SendToDataLayerThread(String p, DataMap data) {
+            path = p;
+            dataMap = data;
+        }
+
+        public void run() {
+            // Construct a DataRequest and send over the data layer
+            PutDataMapRequest putDMR = PutDataMapRequest.create(path);
+            putDMR.getDataMap().putAll(dataMap);
+            PutDataRequest request = putDMR.asPutDataRequest();
+            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(googleClient, request).await();
+            if (result.getStatus().isSuccess()) {
+                Log.v("myTag", "DataMap: " + dataMap + " sent successfully to data layer ");
+            }
+            else {
+                // Log an error
+                Log.v("myTag", "ERROR: failed to send DataMap to data layer");
+            }
+        }
     }
 }
 
