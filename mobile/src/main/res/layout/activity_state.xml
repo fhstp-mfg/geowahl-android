@@ -6,12 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".State">
 
-
     <Button
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/location"
+        android:text="Standort"
         android:id="@+id/location"
+        android:background="@color/darkblue"
+        android:textColor="@color/colorPrimary"
         android:layout_gravity="center_horizontal" />
 
     <ListView
