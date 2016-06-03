@@ -71,8 +71,6 @@ public class MainActivity extends AppCompatActivity implements
     public void getElections(String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-
-
         JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {

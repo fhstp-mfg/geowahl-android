@@ -73,7 +73,7 @@ public class District extends AppCompatActivity implements
         electionslug = b.getString("electionSlug");
 
         String url = url_part1+wahlslug+"/"+stateslug+url_part2;
-Log.d("url",url);
+        Log.d("url",url);
         Log.d("wahlslug",">"+ wahlslug);
 
         // Build a new GoogleApiClient
@@ -135,7 +135,6 @@ Log.d("url",url);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
 
-
                             }
 
 
@@ -185,8 +184,11 @@ Log.d("url",url);
         switch (item.getItemId()) {
             case android.R.id.home:
                 // app icon in action bar clicked; goto parent activity.
-                //this.finish();
-                NavUtils.navigateUpFromSameTask(this);
+                this.finish();
+                //NavUtils.navigateUpFromSameTask(this);
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                NavUtils.navigateUpTo(this, intent);
                 overridePendingTransition(R.animator.activity_back_in, R.animator.activity_back_out);
                 return true;
             default:

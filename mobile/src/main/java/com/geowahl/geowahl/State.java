@@ -49,17 +49,21 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
     ListView listView;
 
+    ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_state);
 
-        Bundle b = new Bundle();
-        b = getIntent().getExtras();
-        wahlslug = b.getString("wahlSlug");
-        Log.d("slug", wahlslug);
-        electionslug = b.getString("electionSlug");
+
+            Bundle b = new Bundle();
+            b = getIntent().getExtras();
+            wahlslug = b.getString("wahlSlug");
+            Log.d("slug", wahlslug);
+            electionslug = b.getString("electionSlug");
+
+
 
         location = (Button) findViewById(R.id.location);
         listView = (ListView) findViewById(R.id.listView);
@@ -94,12 +98,18 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         getStates(url);
     }
 
+
+
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 // app icon in action bar clicked; goto parent activity.
-                //this.finish();
-                NavUtils.navigateUpFromSameTask(this);
+                this.finish();
+                //NavUtils.navigateUpFromSameTask(this);
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                NavUtils.navigateUpTo(this, intent);
+
                 overridePendingTransition(R.animator.activity_back_in, R.animator.activity_back_out);
                 return true;
             default:
@@ -198,5 +208,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+
+
 }
 
