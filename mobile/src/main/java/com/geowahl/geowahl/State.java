@@ -14,21 +14,27 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,6 +43,9 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
+    private static final String TAG_VOTES = "votes";
+    private static final String TAG_PERCENT = "percent";
+    private static final String TAG_EXACT = "exact";
     private static String url_part1 = "http://geowahl.suits.at/";
     private static String url_part2 = "/states";
 
@@ -45,7 +54,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     String WEARABLE_DATA_PATH = "/wearable_data";
     Button location;
     GPSTracker gps;
-    String wahlslug,electionslug;
+    String wahlslug,electionslug,locationurl;
 
     ListView listView;
 
@@ -60,6 +69,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         wahlslug = b.getString("wahlSlug");
         Log.d("slug", wahlslug);
         electionslug = b.getString("electionSlug");
+        //final String[] donuturl = new String[1];
 
         location = (Button) findViewById(R.id.location);
         listView = (ListView) findViewById(R.id.listView);
@@ -75,7 +85,12 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
                             Log.d("lat", String.valueOf(latitude));
                             Log.d("lon", String.valueOf(longitude));
-                        }else {
+                            locationurl = url_part1+electionslug+"/"+latitude+","+longitude;
+
+                            Log.d("locationurl", locationurl);
+                            getResult(locationurl);
+
+                        } else {
                             gps.showSettingAlerts();
                         }
                     }
@@ -98,8 +113,12 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         switch (item.getItemId()) {
             case android.R.id.home:
                 // app icon in action bar clicked; goto parent activity.
-                //this.finish();
-                NavUtils.navigateUpFromSameTask(this);
+                this.finish();
+                //NavUtils.navigateUpFromSameTask(this);
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                NavUtils.navigateUpTo(this, intent);
+
                 overridePendingTransition(R.animator.activity_back_in, R.animator.activity_back_out);
                 return true;
             default:
@@ -110,24 +129,24 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     public void getStates(String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(JSONArray response) {
+            public void onResponse(JSONObject  response) {
 
                 try {
 
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
 
-                    for (int i = 0; i < response.length(); i++) {
+                    JSONArray array = response.getJSONArray("states");
+                    Log.d("states",array.toString());
+                    for (int i = 0; i < array.length(); i++) {
 
-                        JSONObject obj = (JSONObject) response.get(i);
-                        //Log.d("state",obj.getString(TAG_NAME).toString());
+                        JSONObject object = array.getJSONObject(i);
 
-                        String stateName = obj.getString(TAG_NAME);
-                        String stateSlug = obj.getString(TAG_SLUG);
+                        String stateName = object.getString(TAG_NAME);
+                        String stateSlug = object.getString(TAG_SLUG);
 
-                        Log.d("stateName",stateName);
-                        Log.d("stateSlug",stateSlug);
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", stateName);
                         d.put("slug", stateSlug);
@@ -149,7 +168,6 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                 //ausgewählte Wahl
                                 Log.d("array", arrayList.get((int)id).get(TAG_NAME));
 
-
                                 Intent i = new Intent(State.this, District.class);
                                 Bundle bundle = new Bundle();
                                 bundle.putString("wahlSlug",wahlslug);
@@ -159,9 +177,7 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
                             }
-
                         });
-
                     }
 
                 } catch (JSONException e) {
@@ -184,6 +200,87 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         queue.add(req);
     }
 
+    public void getResult(final String url_to_api) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        final String[] url = new String[1];
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("respns",response.toString());
+
+                try {
+                    JSONObject district = response.getJSONObject("district");
+                    String districtname = district.getString("name");
+                    String districtid = district.getString("id");
+                    JSONObject state = response.getJSONObject("state");
+                    String stateslug = state.getString("slug");
+                    Log.d("slug",stateslug);
+
+                    JSONArray results1 = district.getJSONArray("results");
+
+                    dataMap.putString("districtname", districtname);
+                    dataMap.putString("districtid", districtid);
+
+                    url[0] = url_part1+electionslug+"/"+stateslug+"/"+districtid+"/donut-chart";
+
+
+
+                    for(int i=0;i < results1.length();i++){
+                        JSONObject obj = results1.getJSONObject(i);
+
+                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
+                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
+                    }
+
+                    //JSONObject state = response.getJSONObject("state");
+                    String statename = state.getString("name");
+                    JSONArray results2 = state.getJSONArray("results");
+
+                    dataMap.putString("statename", statename);
+
+                    for(int i=0;i < results2.length();i++){
+                        JSONObject obj = results2.getJSONObject(i);
+
+                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
+                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
+                        dataMap.putString("percent_"+i, obj.getString(TAG_PERCENT));
+                        dataMap.putString("exact_"+i, obj.getString(TAG_EXACT));
+                    }
+                    new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+
+                    Intent i = new Intent(State.this, Webview.class);
+                    Bundle bundle = new Bundle();
+                    Log.d("locationurl", url[0]);
+                    bundle.putString("donuturl", url[0]);
+                    i.putExtras(bundle);
+                    startActivity(i);
+                    overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+                Log.d("response", response.toString());
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("test",error.getMessage());
+                VolleyLog.d("error", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        queue.add(req);
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
 
@@ -197,6 +294,32 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
+    }
+
+    class SendToDataLayerThread extends Thread {
+        String path;
+        DataMap dataMap;
+
+        // Constructor for sending data objects to the data layer
+        SendToDataLayerThread(String p, DataMap data) {
+            path = p;
+            dataMap = data;
+        }
+
+        public void run() {
+            // Construct a DataRequest and send over the data layer
+            PutDataMapRequest putDMR = PutDataMapRequest.create(path);
+            putDMR.getDataMap().putAll(dataMap);
+            PutDataRequest request = putDMR.asPutDataRequest();
+            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(googleClient, request).await();
+            if (result.getStatus().isSuccess()) {
+                Log.v("myTag", "DataMap: " + dataMap + " sent successfully to data layer ");
+            }
+            else {
+                // Log an error
+                Log.v("myTag", "ERROR: failed to send DataMap to data layer");
+            }
+        }
     }
 }
 

@@ -11,11 +11,13 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -46,9 +48,6 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
 
-    String electionName;
-    String electionSlug;
-
 
     ListView listView;
 
@@ -65,28 +64,31 @@ public class MainActivity extends AppCompatActivity implements
                 .addOnConnectionFailedListener(this)
                 .build();
 
+        Log.d("url",url);
         getElections(url);
     }
 
     public void getElections(String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
 
-
-        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
             @Override
-            public void onResponse(JSONArray response) {
-
+            public void onResponse(JSONObject response) {
                 try {
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
+                    //JSONObject elections = response.getJSONObject("elections");
+                    JSONArray array = response.getJSONArray("elections");
+                    Log.d("elections",array.toString());
 
-                    for (int i = 0; i < response.length(); i++) {
+                    for(int i = 0;i< array.length();i++){
+                        JSONObject object = array.getJSONObject(i);
+                        //Log.d("election",object.getString("name"));
 
-                        JSONObject obj = (JSONObject) response.get(i);
-                        Log.d("wahl",obj.getString(TAG_NAME).toString());
 
-                        electionName = obj.getString(TAG_NAME);
-                        electionSlug = obj.getString(TAG_SLUG);
+                        String electionName = object.getString(TAG_NAME);
+                        String electionSlug = object.getString(TAG_SLUG);
 
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", electionName);
@@ -110,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements
                                 Intent i = new Intent(MainActivity.this, State.class);
                                 Bundle bundle = new Bundle();
                                 bundle.putString("wahlSlug",arrayList.get((int)id).get(TAG_SLUG));
-                                bundle.putString("electionSlug",arrayList.get((int)id).get(electionSlug));
+                                bundle.putString("electionSlug",arrayList.get((int)id).get(TAG_SLUG));
                                 i.putExtras(bundle);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
@@ -120,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements
 
 
                     }
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                     Toast.makeText(getApplicationContext(),
@@ -129,17 +130,18 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         }, new Response.ErrorListener() {
+
             @Override
             public void onErrorResponse(VolleyError error) {
+                Log.d("test",error.getMessage());
                 VolleyLog.d("error", "Error: " + error.getMessage());
-
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
         queue.add(req);
     }
-
-
 
 
     @Override

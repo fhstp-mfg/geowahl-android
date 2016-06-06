@@ -14,11 +14,13 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -49,11 +51,12 @@ public class District extends AppCompatActivity implements
 
     private static final String TAG_NAME = "name";
     private static final String TAG_SLUG = "slug";
+    private static final String TAG_ID = "id";
     private static String url_part1 = "http://geowahl.suits.at/";
     private static String url_part2 = "/districts";
     String wahlslug, stateslug, electionslug;
 
-    String districtName;
+    String districtName,districtId;
 
     ListView listView;
 
@@ -73,7 +76,7 @@ public class District extends AppCompatActivity implements
         electionslug = b.getString("electionSlug");
 
         String url = url_part1+wahlslug+"/"+stateslug+url_part2;
-Log.d("url",url);
+Log.d("uuuuuuuurl",url);
         Log.d("wahlslug",">"+ wahlslug);
 
         // Build a new GoogleApiClient
@@ -83,26 +86,29 @@ Log.d("url",url);
                 .addOnConnectionFailedListener(this)
                 .build();
 
-        getDistricts(url);
+        getDistricts(url,stateslug);
     }
 
-    public void getDistricts(String url_to_api) {
+    public void getDistricts(String url_to_api, final String state) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        JsonArrayRequest req = new JsonArrayRequest(url_to_api,new Response.Listener<JSONArray>() {
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(JSONArray response) {
+            public void onResponse(JSONObject response) {
 
                 try {
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
+                    JSONArray array = response.getJSONArray("districts");
 
-                    for (int j = 0; j < response.length(); j++) {
+                    for (int j = 0; j < array.length(); j++) {
 
-                        JSONObject obj = (JSONObject) response.get(j);
-                        Log.d("district",obj.getString(TAG_NAME).toString());
+                        JSONObject object = array.getJSONObject(j);
+                        //Log.d("district",object.getString(TAG_NAME).toString());
 
-                        districtName = obj.getString(TAG_NAME);
-
+                        districtName = object.getString(TAG_NAME);
+                        districtId = object.getString(TAG_ID);
+                        Log.d("district",districtId);
 
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", districtName);
@@ -113,26 +119,28 @@ Log.d("url",url);
                                 R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
 
                         listView.setAdapter(adapter);
-                        final int finalJ = j;
+                        //final int finalJ = j;
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
                             public void onItemClick(AdapterView<?> parent, final View view,
                                                     int position, long id) {
 
                                 //ausgewählte Wahl
-                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+                                //Log.d("array", arrayList.get((int)id).get(TAG_NAME));
 
                                 //dataMap.putString("district", districtName);
                                 dataMap.putString("district", arrayList.get((int)id).get(TAG_NAME));
                                 new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
 
+
+                                Log.d("tfouzg",state+electionslug+districtId);
                                 Intent i = new Intent(District.this, Webview.class);
                                 Bundle bundle = new Bundle();
-                                bundle.putString("stateSlug",stateslug);
+                                bundle.putString("stateSlug",state);
                                 bundle.putString("electionSlug",electionslug);
-                                bundle.putInt("districtId", finalJ);
+                                bundle.putString("districtId", districtId);
                                 i.putExtras(bundle);
-                                startActivity(i);
+                                //startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
 
 
@@ -185,8 +193,12 @@ Log.d("url",url);
         switch (item.getItemId()) {
             case android.R.id.home:
                 // app icon in action bar clicked; goto parent activity.
-                //this.finish();
-                NavUtils.navigateUpFromSameTask(this);
+                this.finish();
+                //NavUtils.navigateUpFromSameTask(this);
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                NavUtils.navigateUpTo(this, intent);
+
                 overridePendingTransition(R.animator.activity_back_in, R.animator.activity_back_out);
                 return true;
             default:
