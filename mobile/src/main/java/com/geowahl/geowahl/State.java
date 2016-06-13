@@ -55,9 +55,10 @@ public class State extends AppCompatActivity implements
 
     Button location;
     GPSTracker gps;
-    String electionslug,locationurl;;
+    String electionslug,locationurl;
 
-    ArrayList<String> colorList;
+    ArrayList<String> colorList = new ArrayList<>();
+    ArrayList<String> partyList = new ArrayList<>();
 
     ListView listView;
 
@@ -79,11 +80,11 @@ public class State extends AppCompatActivity implements
         Bundle b = getIntent().getExtras();
         electionslug = b.getString("electionSlug");
         String url = State.url + electionslug + url_part2;
-        Log.d("slug", electionslug);
-        colorList = b.getStringArrayList("colorList");
-
         location = (Button) findViewById(R.id.location);
         listView = (ListView) findViewById(R.id.listView);
+
+        ArrayList<String> partyList = new ArrayList<>();
+        getPartiesAndColors(State.url+"elections",electionslug);
 
         getStates(url);
 
@@ -107,6 +108,7 @@ public class State extends AppCompatActivity implements
             locationurl = url + electionslug + "/" + latitude + "," + longitude;
 
             Log.d("locationurl", locationurl);
+            Log.d("partylist", partyList.toString());
             getResult(locationurl);
 
         } else {
@@ -158,7 +160,7 @@ public class State extends AppCompatActivity implements
 
                         arrayList.add(d);
 
-                        Log.d("wahlslug",">"+ electionslug);
+                        //Log.d("wahlslug",">"+ electionslug);
 
                         ListAdapter adapter = new SimpleAdapter(
                                 State.this, arrayList,
@@ -179,6 +181,7 @@ public class State extends AppCompatActivity implements
                                 bundle.putString("stateSlug",arrayList.get((int)id).get(Config.TAG_SLUG));
                                 bundle.putString("statename", arrayList.get((int)id).get(Config.TAG_NAME));
                                 bundle.putStringArrayList("colorList", colorList);
+                                bundle.putStringArrayList("partyList", partyList);
 
                                 i.putExtras(bundle);
                                 startActivity(i);
@@ -230,29 +233,55 @@ public class State extends AppCompatActivity implements
                     String url = State.url +electionslug+"/"+stateslug+"/"+districtid;
 
                     ArrayList<Integer> voteslist = new ArrayList<>();
+                    ArrayList<String> percentlist = new ArrayList<>();
+                    ArrayList<String> namelist = new ArrayList<>();
                     for(int i=0;i < results1.length();i++) {
                         JSONObject obj = results1.getJSONObject(i);
                         Integer votes = Integer.parseInt(obj.getString(Config.TAG_VOTES));
-                        String name = obj.getString(Config.TAG_NAME);
-
                         voteslist.add(votes);
+
+                        String name = obj.getString(Config.TAG_NAME);
+                        namelist.add(name);
+
+                        String percent = obj.getString(Config.TAG_PERCENT);
+                        percentlist.add(percent);
 
                     }
 
+
                     Integer maxVotes = Collections.max(voteslist);
+                    String maxPercent = null;
                     String maxParty = null;
+                    //String percentForMaxParty = null;
                     for(int i=0; i < voteslist.size(); i++) {
                         if (voteslist.get(i) == maxVotes) {
                             maxParty = results1.getJSONObject(i).getString(Config.TAG_NAME);
+                            maxPercent = results1.getJSONObject(i).getString(Config.TAG_PERCENT);
                         }
+                        /*if (percentlist.get(i) == maxPercent) {
+                            percentForMaxParty = results1.getJSONObject(i).getString(Config.TAG_PERCENT);
+                        }*/
                     }
 
+                    String maxColor = null;
+                    for(int i = 0; i < partyList.size(); i++){
+                        if(partyList.get(i).equalsIgnoreCase(maxParty)){
+                            maxColor = colorList.get(i);
+                        }
+                    }
 
                     //wearable
                     dataMap.putString("district", districtname);
                     dataMap.putString("statename", statename);
                     dataMap.putString("maxParty", maxParty);
-                    dataMap.putStringArrayList("colorList", colorList);
+                    dataMap.putString("maxColor", maxColor);
+                    dataMap.putString("maxPercent", maxPercent);
+                    dataMap.putStringArrayList("colorList", colorList); //alle Farben
+                    dataMap.putStringArrayList("partyList", partyList); // alle Parteien
+                    dataMap.putStringArrayList("nameList", namelist); //Namen aller Parteien aus dem JSON
+                    dataMap.putIntegerArrayList("votesList", voteslist); //Votes aller Parteien aus dem JSON
+                    dataMap.putStringArrayList("percentList", percentlist); //% aller Parteien aus dem JSON
+
                     new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
 
 
@@ -285,6 +314,62 @@ public class State extends AppCompatActivity implements
 
         queue.add(req);
     }
+
+
+
+    public void getPartiesAndColors(final String url_to_api, final String slug) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+
+                try {
+                    final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
+
+                    JSONArray array = response.getJSONArray("elections");
+
+                    for(int i = 0;i< array.length();i++){
+                        JSONObject object = array.getJSONObject(i);
+
+                        String electionSlug = object.getString(Config.TAG_SLUG);
+
+                        if(electionSlug.equalsIgnoreCase(slug)) {
+                            JSONArray partyArray = object.getJSONArray("parties");
+                            for (int x = 0; x < partyArray.length(); x++) {
+                                JSONObject obj = partyArray.getJSONObject(x);
+                                String party = obj.getString("name");
+                                String hex = obj.getString("hex");
+                                partyList.add(party);
+                                colorList.add(hex);
+                            }
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+                Log.d("response", response.toString());
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("test",error.getMessage());
+                VolleyLog.d("error", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        queue.add(req);
+    }
+
 
     // Connect to the data layer when the Activity starts
     @Override

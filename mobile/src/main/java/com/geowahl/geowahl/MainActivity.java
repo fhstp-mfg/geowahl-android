@@ -74,14 +74,19 @@ public class MainActivity extends AppCompatActivity {
                         String electionSlug = object.getString(Config.TAG_SLUG);
 
                         JSONArray partyArray = object.getJSONArray("parties");
-                        final ArrayList<String> colorList = new ArrayList<>();
+                        //final ArrayList<String> colorList = new ArrayList<>();
+                        //final ArrayList<String> partyList = new ArrayList<>();
 
-                        for(int x=0; x<partyArray.length(); x++){
+                        /*for(int x=0; x<partyArray.length(); x++){
                             JSONObject hexObj = partyArray.getJSONObject(x);
                             String hex = hexObj.getString("hex");
                             Log.d("hexcode", hex);
                             colorList.add(hex);
-                        }
+
+                            //String party = hexObj.getString("name");
+                            //Log.d("partyname", party);
+                            //partyList.add(party);
+                        }*/
 
                         final HashMap<String, String> d = new HashMap<>();
                         d.put("name", electionName);
@@ -105,7 +110,8 @@ public class MainActivity extends AppCompatActivity {
                                 Intent i = new Intent(MainActivity.this, State.class);
 
                                 final Bundle bundle = new Bundle();
-                                bundle.putStringArrayList("colorList", colorList);
+                                //bundle.putStringArrayList("colorList", colorList);
+                                //bundle.putStringArrayList("partyList", partyList);
                                 bundle.putString("electionSlug",arrayList.get((int)id).get(Config.TAG_SLUG));
                                 i.putExtras(bundle);
                                 startActivity(i);

@@ -53,7 +53,8 @@ public class District extends AppCompatActivity implements
 
     String districtName,districtId;
 
-    ArrayList<String> colorList;
+    ArrayList<String> colorList = new ArrayList<>();
+    ArrayList<String> partyList = new ArrayList<>();
 
     ListView listView;
 
@@ -71,6 +72,7 @@ public class District extends AppCompatActivity implements
         electionslug = b.getString("electionSlug");
         statename = b.getString("statename");
         colorList = b.getStringArrayList("colorList");
+        partyList = b.getStringArrayList("partyList");
 
         String url = url_part1 +electionslug+"/"+stateslug+url_part2;
         Log.d("uuurl",url);
@@ -130,13 +132,13 @@ public class District extends AppCompatActivity implements
                                 Log.d("selectedId", selectedId);
 
                                 String urlToShowChart = url_part1 +electionslug+"/"+state+"/"+selectedId;
-                                Log.d("tfouzg",state+electionslug+selectedId);
+                                //Log.d("tfouzg",state+electionslug+selectedId);
 
 
                                 //wearable
                                 dataMap.putString("district", selectedName);
                                 dataMap.putString("statename", statename);
-                                dataMap.putStringArrayList("colorList", colorList);
+                                Log.d("urltoshowchatrts",urlToShowChart);
                                 getVotes(urlToShowChart);
 
                                 Intent i = new Intent(District.this, Webview.class);
@@ -187,26 +189,48 @@ public class District extends AppCompatActivity implements
                     JSONArray results = district.getJSONArray("results");
 
                     ArrayList<Integer> voteslist = new ArrayList<>();
+                    ArrayList<String> percentlist = new ArrayList<>();
+                    ArrayList<String> namelist = new ArrayList<>();
                     for(int i=0;i < results.length();i++) {
                         JSONObject obj = results.getJSONObject(i);
                         Integer votes = Integer.parseInt(obj.getString(Config.TAG_VOTES));
-
                         voteslist.add(votes);
+
+                        String name = obj.getString(Config.TAG_NAME);
+                        namelist.add(name);
+
+                        String percent = obj.getString(Config.TAG_PERCENT);
+                        percentlist.add(percent);
+
                     }
 
-                    int maxVotes = Collections.max(voteslist);
+                    Integer maxVotes = Collections.max(voteslist);
                     String maxParty = null;
-                    String result = null;
+                    String maxPercent = null;
                     for(int i=0; i < voteslist.size(); i++) {
                         if (voteslist.get(i) == maxVotes) {
                             maxParty = results.getJSONObject(i).getString(Config.TAG_NAME);
-                            result = results.getJSONObject(i).getString(Config.TAG_VOTES);
+                            maxPercent = results.getJSONObject(i).getString(Config.TAG_PERCENT);
                         }
                     }
 
-                    Log.d("maxResult", result);
-                    Log.d("maxParty", maxParty);
+                    String maxColor = null;
+                    for(int i = 0; i < partyList.size(); i++){
+                        if(partyList.get(i).equalsIgnoreCase(maxParty)){
+                            maxColor = colorList.get(i);
+                        }
+                    }
+
                     dataMap.putString("maxParty", maxParty);
+                    dataMap.putString("maxColor", maxColor);
+                    dataMap.putString("maxPercent", maxPercent);
+                    dataMap.putStringArrayList("colorList", colorList); //alle Farben
+                    dataMap.putStringArrayList("partyList", partyList); // alle Parteien
+                    dataMap.putStringArrayList("nameList", namelist); //Namen aller Parteien aus dem JSON
+                    dataMap.putIntegerArrayList("votesList", voteslist); //Votes aller Parteien aus dem JSON
+                    dataMap.putStringArrayList("percentList", percentlist); //% aller Parteien aus dem JSON
+                    Log.d("dataMap",dataMap.toString());
+
                     new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
 
                 } catch (JSONException e) {
