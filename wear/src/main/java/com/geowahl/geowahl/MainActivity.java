@@ -105,6 +105,7 @@ public class MainActivity extends Activity {
             color = data.getString("maxColor"); //GewinnerPartei Farbe
             percent = data.getString("maxPercent"); //gewinnerPartei %
 
+            stub.setBackgroundColor(Color.parseColor(color));
             //Für die richtigen Farben & Parteien (pro Wahl sind die ja verschieden) hab ich einen extra Call gemacht
             //die Farben und Parteien die es in der akteuell ausgewählten Wahl gibt sind in colorList und partyList drin
             //beim durchiterieren passt also die Farbe an erster Stelle zur Partei an erster Stelle usw
