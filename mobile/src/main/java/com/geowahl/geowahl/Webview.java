@@ -19,15 +19,22 @@ public class Webview extends AppCompatActivity {
 
     String url;
     private static String url_part1 = "http://geowahl.suits.at/";
+    private String donutChart = "/donut-chart";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_webview);
 
+        Bundle b = getIntent().getExtras();
+        String jsonUrl = b.getString("url");
 
-        Bundle b = new Bundle();
-        b = getIntent().getExtras();
+        url = jsonUrl+donutChart;
+        Log.d("url",jsonUrl);
+        WebView webView = (WebView) findViewById(R.id.webview);
+        loadWebViewLoad(webView);
+
+        /*
         if(b.getString("donuturl") != "") {
             url = b.getString("donuturl");
         }
@@ -36,14 +43,13 @@ public class Webview extends AppCompatActivity {
             /*bundle.putString("stateSlug",stateslug);
             bundle.putString("electionSlug",electionslug);
             bundle.putString("districtId", districtId);*/
+        /*
+
         }else{
             Log.d("test","zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 
         }
-        Log.d("url",url);
-
-        WebView webView = (WebView) findViewById(R.id.webview);
-        loadWebViewLoad(webView);
+        */
     }
 
     private void loadWebViewLoad(WebView webview) {

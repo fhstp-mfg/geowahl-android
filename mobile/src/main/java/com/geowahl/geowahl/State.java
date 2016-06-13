@@ -1,6 +1,7 @@
 package com.geowahl.geowahl;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,9 +20,10 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataApi;
@@ -34,27 +36,28 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
-public class State extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-
-
-    private static final String TAG_NAME = "name";
-    private static final String TAG_SLUG = "slug";
-    private static final String TAG_VOTES = "votes";
-    private static final String TAG_PERCENT = "percent";
-    private static final String TAG_EXACT = "exact";
-    private static String url_part1 = "http://geowahl.suits.at/";
-    private static String url_part2 = "/states";
+public class State extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     GoogleApiClient googleClient;
     DataMap dataMap = new DataMap();
     String WEARABLE_DATA_PATH = "/wearable_data";
+
+
+    private static String url = "http://geowahl.suits.at/";
+    private static String url_part2 = "/states";
+
     Button location;
     GPSTracker gps;
-    String wahlslug,electionslug,locationurl;
+    String electionslug,locationurl;;
+
+    ArrayList<String> colorList;
 
     ListView listView;
 
@@ -64,50 +67,52 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_state);
 
-        Bundle b = new Bundle();
-        b = getIntent().getExtras();
-        wahlslug = b.getString("wahlSlug");
-        Log.d("slug", wahlslug);
-        electionslug = b.getString("electionSlug");
-        //final String[] donuturl = new String[1];
-
-        location = (Button) findViewById(R.id.location);
-        listView = (ListView) findViewById(R.id.listView);
-
-        location.setOnClickListener(
-                new Button.OnClickListener() {
-                    public void onClick(View v) {
-                        gps = new GPSTracker(State.this);
-
-                        if(gps.canGetLocation()){
-                            double latitude = gps.getLatitude();
-                            double longitude = gps.getLongitude();
-
-                            Log.d("lat", String.valueOf(latitude));
-                            Log.d("lon", String.valueOf(longitude));
-                            locationurl = url_part1+electionslug+"/"+latitude+","+longitude;
-
-                            Log.d("locationurl", locationurl);
-                            getResult(locationurl);
-
-                        } else {
-                            gps.showSettingAlerts();
-                        }
-                    }
-                }
-        );
-
-        String url = url_part1+wahlslug+url_part2;
-        //Log.d("url",url);
-
+        // Build a new GoogleApiClient
+        // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
         googleClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .build();
+                .addApi(AppIndex.API).build();
+
+        Bundle b = getIntent().getExtras();
+        electionslug = b.getString("electionSlug");
+        String url = State.url + electionslug + url_part2;
+        Log.d("slug", electionslug);
+        colorList = b.getStringArrayList("colorList");
+
+        location = (Button) findViewById(R.id.location);
+        listView = (ListView) findViewById(R.id.listView);
 
         getStates(url);
+
+        location.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getGPS();
+            }
+        });
     }
+
+    public void getGPS() {
+        gps = new GPSTracker(State.this);
+
+        if (gps.canGetLocation()) {
+            double latitude = gps.getLatitude();
+            double longitude = gps.getLongitude();
+
+            Log.d("lat", String.valueOf(latitude));
+            Log.d("lon", String.valueOf(longitude));
+            locationurl = url + electionslug + "/" + latitude + "," + longitude;
+
+            Log.d("locationurl", locationurl);
+            getResult(locationurl);
+
+        } else {
+            gps.showSettingAlerts();
+        }
+}
 
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -138,14 +143,14 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
 
-                    JSONArray array = response.getJSONArray("states");
+                    final JSONArray array = response.getJSONArray("states");
                     Log.d("states",array.toString());
                     for (int i = 0; i < array.length(); i++) {
 
                         JSONObject object = array.getJSONObject(i);
 
-                        String stateName = object.getString(TAG_NAME);
-                        String stateSlug = object.getString(TAG_SLUG);
+                        String stateName = object.getString(Config.TAG_NAME);
+                        String stateSlug = object.getString(Config.TAG_SLUG);
 
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", stateName);
@@ -153,11 +158,11 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
                         arrayList.add(d);
 
-                        Log.d("wahlslug",">"+ wahlslug);
+                        Log.d("wahlslug",">"+ electionslug);
 
                         ListAdapter adapter = new SimpleAdapter(
                                 State.this, arrayList,
-                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+                                R.layout.activity_listview, new String[]{Config.TAG_NAME}, new int[]{R.id.name});
 
                         listView.setAdapter(adapter);
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -166,13 +171,15 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                                                     int position, long id) {
 
                                 //ausgewählte Wahl
-                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+                                Log.d("array", arrayList.get((int)id).get(Config.TAG_NAME));
 
                                 Intent i = new Intent(State.this, District.class);
                                 Bundle bundle = new Bundle();
-                                bundle.putString("wahlSlug",wahlslug);
                                 bundle.putString("electionSlug",electionslug);
-                                bundle.putString("stateSlug",arrayList.get((int)id).get(TAG_SLUG));
+                                bundle.putString("stateSlug",arrayList.get((int)id).get(Config.TAG_SLUG));
+                                bundle.putString("statename", arrayList.get((int)id).get(Config.TAG_NAME));
+                                bundle.putStringArrayList("colorList", colorList);
+
                                 i.putExtras(bundle);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
@@ -202,14 +209,13 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
 
     public void getResult(final String url_to_api) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        final String[] url = new String[1];
 
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
                 url_to_api, null, new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
-                Log.d("respns",response.toString());
+                Log.d("response",response.toString());
 
                 try {
                     JSONObject district = response.getJSONObject("district");
@@ -217,44 +223,43 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
                     String districtid = district.getString("id");
                     JSONObject state = response.getJSONObject("state");
                     String stateslug = state.getString("slug");
+                    String statename = state.getString("name");
                     Log.d("slug",stateslug);
 
                     JSONArray results1 = district.getJSONArray("results");
+                    String url = State.url +electionslug+"/"+stateslug+"/"+districtid;
 
-                    dataMap.putString("districtname", districtname);
-                    dataMap.putString("districtid", districtid);
-
-                    url[0] = url_part1+electionslug+"/"+stateslug+"/"+districtid+"/donut-chart";
-
-
-
-                    for(int i=0;i < results1.length();i++){
+                    ArrayList<Integer> voteslist = new ArrayList<>();
+                    for(int i=0;i < results1.length();i++) {
                         JSONObject obj = results1.getJSONObject(i);
+                        Integer votes = Integer.parseInt(obj.getString(Config.TAG_VOTES));
+                        String name = obj.getString(Config.TAG_NAME);
 
-                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
-                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
+                        voteslist.add(votes);
+
                     }
 
-                    //JSONObject state = response.getJSONObject("state");
-                    String statename = state.getString("name");
-                    JSONArray results2 = state.getJSONArray("results");
+                    Integer maxVotes = Collections.max(voteslist);
+                    String maxParty = null;
+                    for(int i=0; i < voteslist.size(); i++) {
+                        if (voteslist.get(i) == maxVotes) {
+                            maxParty = results1.getJSONObject(i).getString(Config.TAG_NAME);
+                        }
+                    }
 
+
+                    //wearable
+                    dataMap.putString("district", districtname);
                     dataMap.putString("statename", statename);
-
-                    for(int i=0;i < results2.length();i++){
-                        JSONObject obj = results2.getJSONObject(i);
-
-                        dataMap.putString("name_"+i, obj.getString(TAG_NAME));
-                        dataMap.putString("votes_"+i, obj.getString(TAG_VOTES));
-                        dataMap.putString("percent_"+i, obj.getString(TAG_PERCENT));
-                        dataMap.putString("exact_"+i, obj.getString(TAG_EXACT));
-                    }
+                    dataMap.putString("maxParty", maxParty);
+                    dataMap.putStringArrayList("colorList", colorList);
                     new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+
 
                     Intent i = new Intent(State.this, Webview.class);
                     Bundle bundle = new Bundle();
-                    Log.d("locationurl", url[0]);
-                    bundle.putString("donuturl", url[0]);
+                    Log.d("locationurl", url);
+                    bundle.putString("url", url);
                     i.putExtras(bundle);
                     startActivity(i);
                     overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
@@ -281,9 +286,51 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         queue.add(req);
     }
 
+    // Connect to the data layer when the Activity starts
+    @Override
+    protected void onStart() {
+        super.onStart();
+        googleClient.connect();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "State Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.geowahl.geowahl/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(googleClient, viewAction);
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
 
+    }
+
+    // Disconnect from the data layer when the Activity stops
+    @Override
+    protected void onStop() {
+        if (null != googleClient && googleClient.isConnected()) {
+            googleClient.disconnect();
+        }
+        super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "State Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.geowahl.geowahl/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(googleClient, viewAction);
     }
 
     @Override
@@ -295,6 +342,8 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+
+
 
     class SendToDataLayerThread extends Thread {
         String path;
@@ -322,4 +371,3 @@ public class State extends AppCompatActivity implements GoogleApiClient.Connecti
         }
     }
 }
-

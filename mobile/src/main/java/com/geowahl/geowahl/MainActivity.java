@@ -31,23 +31,13 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, Response.ErrorListener, Response.Listener<JSONObject> {
-
-    GoogleApiClient googleClient;
-    DataMap dataMap = new DataMap();
-    String WEARABLE_DATA_PATH = "/wearable_data";
+public class MainActivity extends AppCompatActivity {
 
     // URL to get contacts JSON
     private static String url = "http://geowahl.suits.at/elections";
-
-    // JSON Node names
-    private static final String TAG_NAME = "name";
-    private static final String TAG_SLUG = "slug";
-
 
     ListView listView;
 
@@ -58,13 +48,7 @@ public class MainActivity extends AppCompatActivity implements
 
         listView = (ListView)findViewById(R.id.listView);
 
-        googleClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-
-        Log.d("url",url);
+        Log.d("ElectionsUrl",url);
         getElections(url);
     }
 
@@ -78,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements
             public void onResponse(JSONObject response) {
                 try {
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
-                    //JSONObject elections = response.getJSONObject("elections");
+
                     JSONArray array = response.getJSONArray("elections");
                     Log.d("elections",array.toString());
 
@@ -86,11 +70,20 @@ public class MainActivity extends AppCompatActivity implements
                         JSONObject object = array.getJSONObject(i);
                         //Log.d("election",object.getString("name"));
 
+                        String electionName = object.getString(Config.TAG_NAME);
+                        String electionSlug = object.getString(Config.TAG_SLUG);
 
-                        String electionName = object.getString(TAG_NAME);
-                        String electionSlug = object.getString(TAG_SLUG);
+                        JSONArray partyArray = object.getJSONArray("parties");
+                        final ArrayList<String> colorList = new ArrayList<>();
 
-                        HashMap<String, String> d = new HashMap<>();
+                        for(int x=0; x<partyArray.length(); x++){
+                            JSONObject hexObj = partyArray.getJSONObject(x);
+                            String hex = hexObj.getString("hex");
+                            Log.d("hexcode", hex);
+                            colorList.add(hex);
+                        }
+
+                        final HashMap<String, String> d = new HashMap<>();
                         d.put("name", electionName);
                         d.put("slug", electionSlug);
 
@@ -98,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements
 
                         ListAdapter adapter = new SimpleAdapter(
                                 MainActivity.this, arrayList,
-                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+                                R.layout.activity_listview, new String[]{Config.TAG_NAME}, new int[]{R.id.name});
 
                         listView.setAdapter(adapter);
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -107,21 +100,21 @@ public class MainActivity extends AppCompatActivity implements
                                                     int position, long id) {
 
                                 //ausgewählte Wahl
-                                Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+                                Log.d("array", arrayList.get((int)id).get(Config.TAG_NAME));
 
                                 Intent i = new Intent(MainActivity.this, State.class);
-                                Bundle bundle = new Bundle();
-                                bundle.putString("wahlSlug",arrayList.get((int)id).get(TAG_SLUG));
-                                bundle.putString("electionSlug",arrayList.get((int)id).get(TAG_SLUG));
+
+                                final Bundle bundle = new Bundle();
+                                bundle.putStringArrayList("colorList", colorList);
+                                bundle.putString("electionSlug",arrayList.get((int)id).get(Config.TAG_SLUG));
                                 i.putExtras(bundle);
                                 startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
                             }
 
                         });
-
-
                     }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                     Toast.makeText(getApplicationContext(),
@@ -143,47 +136,4 @@ public class MainActivity extends AppCompatActivity implements
         queue.add(req);
     }
 
-
-    @Override
-    public void onErrorResponse(VolleyError error) {
-        //mTextView.setText(error.getMessage());
-        Log.d("error",error.getMessage());
-    }
-
-
-
-    // Connect to the data layer when the Activity starts
-    @Override
-    protected void onStart() {
-        super.onStart();
-        googleClient.connect();
-    }
-
-    @Override
-    protected void onStop() {
-        if (null != googleClient && googleClient.isConnected()) {
-            googleClient.disconnect();
-        }
-        super.onStop();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public void onResponse(JSONObject response) {
-
-    }
 }

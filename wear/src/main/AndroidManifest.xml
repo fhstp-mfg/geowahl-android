@@ -15,7 +15,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launchicon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
@@ -26,8 +26,7 @@
         <!-- Splash screen -->
         <activity
             android:name=".Splashscreen"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,16 +39,16 @@
             android:label="@string/app_name">
         </activity>
 
+        <activity
+            android:name=".DrawActivty"
+            android:label="@string/title_activity_draw_activty">
+        </activity>
+
         <service android:name=".ListenerService">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
             </intent-filter>
         </service>
-
-        <activity
-            android:name=".DrawActivty"
-            android:label="@string/title_activity_draw_activty">
-        </activity>
     </application>
 
 </manifest>

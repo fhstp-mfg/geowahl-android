@@ -28,12 +28,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+
 public class MainActivity extends Activity {
 
-    private TextView mTextView;
+    private TextView districtTV, stateTV, partyTV;
     private WatchViewStub stub;
 
-    GestureDetector myG;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,21 +48,24 @@ public class MainActivity extends Activity {
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
-                mTextView = (TextView) stub.findViewById(R.id.text);
+                districtTV = (TextView) stub.findViewById(R.id.district);
+                stateTV = (TextView) stub.findViewById(R.id.state);
+                partyTV = (TextView) stub.findViewById(R.id.partei);
+
 
             }
         });
 
-            stub.setOnTouchListener(new View.OnTouchListener() {
-                public boolean onTouch(View v, MotionEvent event) {
-                    int action = event.getAction();
-                    switch(action){
-                        case MotionEvent.ACTION_DOWN:
-                            startActivity(new Intent(MainActivity.this,DrawActivty.class));
-                            break;
-                    }
-                    return true;
+        stub.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        startActivity(new Intent(MainActivity.this, DrawActivty.class));
+                        break;
                 }
+                return true;
+            }
         });
 
 
@@ -70,22 +76,21 @@ public class MainActivity extends Activity {
 
     }
 
-        public class MessageReceiver extends BroadcastReceiver {
+    public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle data = intent.getBundleExtra("datamap");
-            /*
-            Integer rot = Integer.parseInt(data.getString("r"));
-            Integer grün = Integer.parseInt(data.getString("g"));
-            Integer blau = Integer.parseInt(data.getString("b"));
-            */
-            String name = data.getString("district");
 
-            mTextView.setText(name);
-          //  stub.setBackgroundColor(Color.rgb(rot,grün,blau));
+
+            String district = data.getString("district");
+            String state = data.getString("statename");
+            String party = data.getString("maxParty");
+
+            districtTV.setText(district);
+            stateTV.setText(state);
+            partyTV.setText(party);
 
         }
-    }
-
 
     }
+}

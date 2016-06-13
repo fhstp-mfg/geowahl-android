@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -19,7 +18,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
@@ -37,7 +35,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class District extends AppCompatActivity implements
@@ -47,16 +46,14 @@ public class District extends AppCompatActivity implements
     GoogleApiClient googleClient;
     DataMap dataMap = new DataMap();
     String WEARABLE_DATA_PATH = "/wearable_data";
-    String name;
 
-    private static final String TAG_NAME = "name";
-    private static final String TAG_SLUG = "slug";
-    private static final String TAG_ID = "id";
     private static String url_part1 = "http://geowahl.suits.at/";
     private static String url_part2 = "/districts";
-    String wahlslug, stateslug, electionslug;
+    String stateslug, electionslug, statename;
 
     String districtName,districtId;
+
+    ArrayList<String> colorList;
 
     ListView listView;
 
@@ -69,15 +66,15 @@ public class District extends AppCompatActivity implements
 
         listView = (ListView) findViewById(R.id.listView);
 
-        Bundle b = new Bundle();
-        b = getIntent().getExtras();
-        wahlslug = b.getString("wahlSlug");
+        Bundle b = getIntent().getExtras();
         stateslug = b.getString("stateSlug");
         electionslug = b.getString("electionSlug");
+        statename = b.getString("statename");
+        colorList = b.getStringArrayList("colorList");
 
-        String url = url_part1+wahlslug+"/"+stateslug+url_part2;
-Log.d("uuuuuuuurl",url);
-        Log.d("wahlslug",">"+ wahlslug);
+        String url = url_part1 +electionslug+"/"+stateslug+url_part2;
+        Log.d("uuurl",url);
+        Log.d("wahlslug",">"+ electionslug);
 
         // Build a new GoogleApiClient
         googleClient = new GoogleApiClient.Builder(this)
@@ -99,53 +96,56 @@ Log.d("uuuuuuuurl",url);
 
                 try {
                     final ArrayList<HashMap<String, String>> arrayList = new ArrayList<HashMap<String, String>>();
-                    JSONArray array = response.getJSONArray("districts");
+                    final JSONArray array = response.getJSONArray("districts");
 
                     for (int j = 0; j < array.length(); j++) {
 
                         JSONObject object = array.getJSONObject(j);
                         //Log.d("district",object.getString(TAG_NAME).toString());
 
-                        districtName = object.getString(TAG_NAME);
-                        districtId = object.getString(TAG_ID);
-                        Log.d("district",districtId);
+                        districtName = object.getString(Config.TAG_NAME);
+                        districtId = object.getString("id");
+                        Log.d("DistrictID", districtId);
 
                         HashMap<String, String> d = new HashMap<>();
                         d.put("name", districtName);
+                        d.put("id", districtId);
                         arrayList.add(d);
+
 
                         ListAdapter adapter = new SimpleAdapter(
                                 District.this, arrayList,
-                                R.layout.activity_listview, new String[]{TAG_NAME}, new int[]{R.id.name});
+                                R.layout.activity_listview, new String[]{Config.TAG_NAME, "id"}, new int[]{R.id.name});
 
                         listView.setAdapter(adapter);
-                        //final int finalJ = j;
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
                             public void onItemClick(AdapterView<?> parent, final View view,
                                                     int position, long id) {
 
-                                //ausgewählte Wahl
-                                //Log.d("array", arrayList.get((int)id).get(TAG_NAME));
+                                String selectedName = arrayList.get((int)id).get(Config.TAG_NAME);
+                                Log.d("selectedName", selectedName);
 
-                                //dataMap.putString("district", districtName);
-                                dataMap.putString("district", arrayList.get((int)id).get(TAG_NAME));
-                                new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+                                String selectedId = arrayList.get((int)id).get("id");
+                                Log.d("selectedId", selectedId);
+
+                                String urlToShowChart = url_part1 +electionslug+"/"+state+"/"+selectedId;
+                                Log.d("tfouzg",state+electionslug+selectedId);
 
 
-                                Log.d("tfouzg",state+electionslug+districtId);
+                                //wearable
+                                dataMap.putString("district", selectedName);
+                                dataMap.putString("statename", statename);
+                                dataMap.putStringArrayList("colorList", colorList);
+                                getVotes(urlToShowChart);
+
                                 Intent i = new Intent(District.this, Webview.class);
                                 Bundle bundle = new Bundle();
-                                bundle.putString("stateSlug",state);
-                                bundle.putString("electionSlug",electionslug);
-                                bundle.putString("districtId", districtId);
+                                bundle.putString("url",urlToShowChart);
                                 i.putExtras(bundle);
-                                //startActivity(i);
+                                startActivity(i);
                                 overridePendingTransition(R.animator.activity_in, R.animator.activity_out);
-
-
                             }
-
 
                         });
 
@@ -167,9 +167,69 @@ Log.d("uuuuuuuurl",url);
 
             }
         });
+        queue.add(req);
+
+    }
+
+
+    public void getVotes(String url_to_api) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET,
+                url_to_api, null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("response", response.toString());
+
+                try {
+                    JSONObject district = response.getJSONObject("district");
+                    JSONArray results = district.getJSONArray("results");
+
+                    ArrayList<Integer> voteslist = new ArrayList<>();
+                    for(int i=0;i < results.length();i++) {
+                        JSONObject obj = results.getJSONObject(i);
+                        Integer votes = Integer.parseInt(obj.getString(Config.TAG_VOTES));
+
+                        voteslist.add(votes);
+                    }
+
+                    int maxVotes = Collections.max(voteslist);
+                    String maxParty = null;
+                    String result = null;
+                    for(int i=0; i < voteslist.size(); i++) {
+                        if (voteslist.get(i) == maxVotes) {
+                            maxParty = results.getJSONObject(i).getString(Config.TAG_NAME);
+                            result = results.getJSONObject(i).getString(Config.TAG_VOTES);
+                        }
+                    }
+
+                    Log.d("maxResult", result);
+                    Log.d("maxParty", maxParty);
+                    dataMap.putString("maxParty", maxParty);
+                    new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(District.this, error.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                VolleyLog.d("error", "Error: " + error.getMessage());
+
+            }
+        });
 
         queue.add(req);
     }
+
 
     //Load Json from Assets
     public String loadJSONFromAsset() {
@@ -215,19 +275,6 @@ Log.d("uuuuuuuurl",url);
 
     @Override
     public void onConnected(Bundle bundle) {
-
-
-        // Create a DataMap object and send it to the data layer
-
-        //dataMap.putLong("time", new Date().getTime());
-        //dataMap.putString("district", name);
-        //dataMap.putString("electionslug", electionslug);
-        //dataMap.putString("stateslug", stateslug);
-        //dataMap.putString("front", "250");
-        //dataMap.putString("middle", "260");
-        //dataMap.putString("back", "270");
-        //Requires a new thread to avoid blocking the UI
-
 
     }
 
